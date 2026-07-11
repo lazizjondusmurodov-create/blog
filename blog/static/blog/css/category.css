@@ -1,0 +1,201 @@
+/* ==========================================================================
+   Category page — cards grid + per-category blog list
+   Blogy template uchun qo'shimcha stillar (primary: #214252)
+   ========================================================================== */
+
+.category-page {
+  --cat-primary: #214252;
+  --cat-primary-rgb: 33, 66, 82;
+  padding: 60px 0 80px;
+}
+
+/* --- Sahifa sarlavhasi --- */
+.category-intro {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 50px;
+}
+.category-intro h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--cat-primary);
+  margin-bottom: 12px;
+}
+.category-intro p {
+  color: #6c757d;
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+/* ==========================================================================
+   1) Kategoriya kartalari (grid)
+   ========================================================================== */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+@media (max-width: 991px) { .category-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 575px) { .category-grid { grid-template-columns: 1fr; } }
+
+.category-card {
+  position: relative;
+  display: block;
+  height: 240px;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 0;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+  color: #fff;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+.category-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(var(--cat-primary-rgb), 0.15) 0%, rgba(var(--cat-primary-rgb), 0.85) 100%);
+  transition: background 0.35s ease;
+}
+.category-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 18px 44px rgba(var(--cat-primary-rgb), 0.35);
+}
+.category-card:hover::after {
+  background: linear-gradient(180deg, rgba(var(--cat-primary-rgb), 0.35) 0%, rgba(var(--cat-primary-rgb), 0.92) 100%);
+}
+.category-card:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: -6px;
+}
+
+.category-card__body {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 24px;
+}
+.category-card__count {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(2px);
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: auto;
+}
+.category-card__name {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
+.category-card__more {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: gap 0.25s ease;
+}
+.category-card:hover .category-card__more { gap: 12px; }
+
+/* ==========================================================================
+   2) Tanlangan kategoriya blog ro'yxati
+   ========================================================================== */
+.category-lists { display: none; }
+.category-lists.is-active { display: block; }
+
+.category-list { display: none; }
+.category-list.is-active {
+  display: block;
+  animation: catFadeIn 0.4s ease;
+}
+@keyframes catFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.category-list__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 20px;
+  margin-bottom: 36px;
+  border-bottom: 1px solid #e6e9eb;
+}
+.category-list__title {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--cat-primary);
+  margin: 0;
+}
+.category-list__title span { color: #6c757d; font-weight: 400; font-size: 1.1rem; }
+
+.category-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--cat-primary);
+  color: var(--cat-primary);
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+.category-back:hover { background: var(--cat-primary); color: #fff; }
+
+/* Blog ro'yxatidagi bitta yozuv (mavjud blog-entry uslubiga mos) */
+.category-post {
+  display: flex;
+  gap: 24px;
+  padding-bottom: 28px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid #eef0f1;
+}
+.category-post:last-of-type { border-bottom: 0; }
+.category-post__img {
+  flex: 0 0 200px;
+  max-width: 200px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.category-post__img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease;
+}
+.category-post:hover .category-post__img img { transform: scale(1.06); }
+.category-post__body h2 {
+  font-size: 1.35rem;
+  margin: 6px 0 10px;
+}
+.category-post__body h2 a { color: #1a1a1a; text-decoration: none; }
+.category-post__body h2 a:hover { color: var(--cat-primary); }
+.category-post__meta { font-size: 0.85rem; color: #9aa0a6; }
+.category-post__body p { color: #6c757d; margin-bottom: 14px; }
+
+@media (max-width: 575px) {
+  .category-post { flex-direction: column; gap: 14px; }
+  .category-post__img { flex-basis: auto; max-width: 100%; height: 200px; }
+  .category-intro h1 { font-size: 2rem; }
+}
