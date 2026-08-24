@@ -1,0 +1,50 @@
+# Render.com uchun sozlama.
+# Render bu faylni o'zi topadi va servisni shunga qarab yaratadi.
+# Hujjat: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: blogy
+    runtime: python
+    plan: free
+    region: frankfurt          # O'zbekistonga eng yaqin bepul region
+
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn config.wsgi:application"
+
+    # Yuklangan rasmlar uchun doimiy disk. Busiz har qayta joylashda
+    # media/ papkasi tozalanadi va blog rasmlari yo'qoladi.
+    disk:
+      name: media
+      mountPath: /opt/render/project/src/media
+      sizeGB: 1
+
+    envVars:
+      # Render tasodifiy kalit yaratadi — qo'lda kiritish shart emas
+      - key: SECRET_KEY
+        generateValue: true
+
+      - key: DEBUG
+        value: "False"
+
+      # Render o'z domenini shu yerga qo'shadi (masalan blogy.onrender.com).
+      # O'z domeningizni ulasangiz, uni ham vergul bilan qo'shing.
+      - key: ALLOWED_HOSTS
+        sync: false
+
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+
+      # Render allaqachon HTTPS ga yo'naltiradi — ikki marta yo'naltirish
+      # cheksiz aylanishga olib kelishi mumkin.
+      - key: SECURE_SSL_REDIRECT
+        value: "False"
+
+      - key: SECURE_HSTS_SECONDS
+        value: "3600"
+
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+
+      - key: LOG_LEVEL
+        value: "INFO"
