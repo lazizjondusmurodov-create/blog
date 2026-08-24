@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 
+from .forms import ContactForm
 from .models import Blog, Category, Comment
 
 
@@ -107,7 +108,22 @@ def search(request):
 
 
 def contact(request):
+    if request.method == 'POST':
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                "Xabaringiz yuborildi! Tez orada javob beramiz."
+            )
+            # POST-Redirect-GET: sahifa yangilanganda xabar takrorlanmaydi
+            return redirect('contact')
+        messages.error(request, "Formani to'g'ri to'ldiring.")
+    else:
+        form = ContactForm()
+
     return render(request, 'blog/contact.html', {
+        'form': form,
         'categories': _categories(),
         'nav_active': 'contact',
     })

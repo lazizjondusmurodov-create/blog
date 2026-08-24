@@ -57,3 +57,25 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.blog.title}"
+
+class ContactMessage(models.Model):
+    """Aloqa sahifasidan yuborilgan xabar.
+
+    Email jo'natish uchun SMTP sozlamasi kerak, shuning uchun xabar bazaga
+    saqlanadi va admin panelda ko'riladi.
+    """
+
+    name = models.CharField('Ism', max_length=100)
+    email = models.EmailField('Email')
+    subject = models.CharField('Mavzu', max_length=200)
+    message = models.TextField('Xabar')
+    created_at = models.DateTimeField('Yuborilgan vaqt', auto_now_add=True)
+    is_read = models.BooleanField("O'qilgan", default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Aloqa xabari'
+        verbose_name_plural = 'Aloqa xabarlari'
+
+    def __str__(self):
+        return f'{self.name} — {self.subject}'

@@ -51,26 +51,64 @@
       </div>
 
       <div class="col-lg-8" data-aos="fade-up" data-aos-delay="200">
-        {# Diqqat: bu forma hozircha ko'rinish uchun — yuborish ulanmagan. #}
-        <form action="#" method="post">
+
+        {% if messages %}
+          {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <form method="post" novalidate>
           {% csrf_token %}
+
+          {# Bot tuzog'i — foydalanuvchiga ko'rinmaydi #}
+          <div class="honeypot" aria-hidden="true">{{ form.website }}</div>
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-error">{{ form.non_field_errors }}</div>
+          {% endif %}
+
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label for="c-name" class="form-label">Ism</label>
-              <input type="text" id="c-name" class="form-control" placeholder="Ismingiz">
+              <label for="{{ form.name.id_for_label }}" class="form-label">
+                Ism <span class="text-primary">*</span>
+              </label>
+              {{ form.name }}
+              {% for error in form.name.errors %}
+              <div class="field-error">{{ error }}</div>
+              {% endfor %}
             </div>
+
             <div class="col-md-6 mb-3">
-              <label for="c-email" class="form-label">Email</label>
-              <input type="email" id="c-email" class="form-control" placeholder="email@misol.uz">
+              <label for="{{ form.email.id_for_label }}" class="form-label">
+                Email <span class="text-primary">*</span>
+              </label>
+              {{ form.email }}
+              {% for error in form.email.errors %}
+              <div class="field-error">{{ error }}</div>
+              {% endfor %}
             </div>
+
             <div class="col-12 mb-3">
-              <label for="c-subject" class="form-label">Mavzu</label>
-              <input type="text" id="c-subject" class="form-control" placeholder="Xabar mavzusi">
+              <label for="{{ form.subject.id_for_label }}" class="form-label">
+                Mavzu <span class="text-primary">*</span>
+              </label>
+              {{ form.subject }}
+              {% for error in form.subject.errors %}
+              <div class="field-error">{{ error }}</div>
+              {% endfor %}
             </div>
+
             <div class="col-12 mb-3">
-              <label for="c-message" class="form-label">Xabar</label>
-              <textarea id="c-message" cols="30" rows="7" class="form-control" placeholder="Xabaringiz..."></textarea>
+              <label for="{{ form.message.id_for_label }}" class="form-label">
+                Xabar <span class="text-primary">*</span>
+              </label>
+              {{ form.message }}
+              {% for error in form.message.errors %}
+              <div class="field-error">{{ error }}</div>
+              {% endfor %}
             </div>
+
             <div class="col-12">
               <input type="submit" value="Xabar yuborish" class="btn btn-primary">
             </div>

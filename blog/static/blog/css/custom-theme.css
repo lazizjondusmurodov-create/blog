@@ -420,6 +420,23 @@ a:focus-visible,
 .alert-success { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
 .alert-error   { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
 
+/* Forma maydonidagi xato */
+.field-error {
+  color: #b91c1c;
+  font-size: .82rem;
+  margin-top: .35rem;
+}
+.field-error + .field-error { margin-top: .15rem; }
+
+/* Bot tuzog'i — ekranda ko'rinmaydi, lekin display:none emas:
+   ba'zi botlar display:none maydonni o'tkazib yuboradi. */
+.honeypot {
+  position: absolute !important;
+  left: -9999px !important;
+  width: 1px; height: 1px;
+  overflow: hidden;
+}
+
 /* 8. Footer
    ========================================================================== */
 .site-footer {
