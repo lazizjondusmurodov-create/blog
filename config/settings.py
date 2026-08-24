@@ -60,6 +60,16 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',      # anonim o'qish uchun umumiy chegara
+        'user': '1000/hour',     # tizimga kirgan foydalanuvchi
+        'comment': '10/hour',    # izoh yozish — spamga qarshi
+        'login': '5/min',        # token olish — parol tanlashga qarshi
+    },
 }
 
 MIDDLEWARE = [

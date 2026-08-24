@@ -6,6 +6,8 @@ from rest_framework.response import Response
 
 from blog.models import Author, Blog, Category, Comment, Image
 
+from .throttles import CommentBurstThrottle
+
 from .serializers import (
     AuthorSerializer,
     BlogDetailSerializer,
@@ -74,6 +76,12 @@ class CommentViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'text']
     ordering_fields = ['created_at']
     ordering = ['-created_at']
+
+    def get_throttles(self):
+        """Chegara faqat yozishga — izohlarni o'qish cheklanmaydi."""
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [CommentBurstThrottle()]
+        return super().get_throttles()
 
 
 class ImageViewSet(viewsets.ModelViewSet):

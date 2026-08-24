@@ -5,12 +5,16 @@ Ishga tushirish:  python manage.py test blog.api
 """
 from datetime import timedelta
 
+from unittest.mock import patch
+
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
+from blog.api.throttles import CommentBurstThrottle, LoginRateThrottle
 from blog.models import Author, Blog, Category, Comment
 
 
@@ -308,3 +312,143 @@ class WriteTests(ApiTestData):
         }, format='json')
         self.assertEqual(r.status_code, status.HTTP_201_CREATED)
         self.assertNotEqual(r.data['created_at'][:4], '1999')
+
+
+class AuthEndpointTests(ApiTestData):
+    """/api/auth/ — token olish, o'chirish, joriy foydalanuvchi."""
+
+    def setUp(self):
+        # DRF chegarani keshda saqlaydi — testlar bir-biriga ta'sir qilmasin.
+        cache.clear()
+
+    def tearDown(self):
+        cache.clear()
+
+    def test_obtain_token_with_valid_credentials(self):
+        r = self.client.post('/api/auth/token/', {
+            'username': 'tester', 'password': 'parol12345',
+        }, format='json')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertEqual(r.data['token'], self.token.key)
+        self.assertEqual(r.data['username'], 'tester')
+        self.assertEqual(r.data['user_id'], self.user.pk)
+
+    def test_obtain_token_with_wrong_password(self):
+        r = self.client.post('/api/auth/token/', {
+            'username': 'tester', 'password': 'notarealpassword',
+        }, format='json')
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertNotIn('token', r.data)
+
+    def test_token_from_endpoint_actually_works(self):
+        """Olingan token bilan haqiqatan blog yaratib bo'lishi kerak."""
+        r = self.client.post('/api/auth/token/', {
+            'username': 'tester', 'password': 'parol12345',
+        }, format='json')
+        key = r.data['token']
+
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {key}')
+        r = self.client.post('/api/blogs/', {
+            'title': 'Token endpointi orqali',
+            'short_description': 'q', 'long_description': 'u',
+            'category': self.category.pk, 'author': self.author.pk,
+        }, format='json')
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+
+    def test_new_user_gets_token_created(self):
+        """Tokeni yo'q foydalanuvchi ham token ola bilishi kerak."""
+        User.objects.create_user('yangi', password='parol12345')
+        self.assertFalse(Token.objects.filter(user__username='yangi').exists())
+
+        r = self.client.post('/api/auth/token/', {
+            'username': 'yangi', 'password': 'parol12345',
+        }, format='json')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertTrue(Token.objects.filter(user__username='yangi').exists())
+
+    def test_me_requires_authentication(self):
+        r = self.client.get('/api/auth/me/')
+        self.assertIn(r.status_code, (status.HTTP_401_UNAUTHORIZED,
+                                      status.HTTP_403_FORBIDDEN))
+
+    def test_me_returns_current_user(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token.key}')
+        r = self.client.get('/api/auth/me/')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertEqual(r.data['username'], 'tester')
+
+    def test_logout_deletes_token(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token.key}')
+        r = self.client.post('/api/auth/logout/')
+        self.assertEqual(r.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Token.objects.filter(user=self.user).exists())
+
+        # Eski token endi ishlamasligi kerak
+        r = self.client.get('/api/auth/me/')
+        self.assertEqual(r.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class ThrottleTests(ApiTestData):
+    """Spamga qarshi chegaralar.
+
+    DRF throttle tezligini klass yaratilganda bir marta o'qiydi, shuning uchun
+    override_settings ish bermaydi — rate'ni to'g'ridan-to'g'ri patch qilamiz.
+    """
+
+    def setUp(self):
+        cache.clear()
+
+    def tearDown(self):
+        cache.clear()
+
+    def _post_comment(self):
+        return self.client.post('/api/comments/', {
+            'blog': self.blog.pk, 'name': 'Spam',
+            'email': 'spam@example.com', 'text': 'xabar',
+        }, format='json')
+
+    def test_comment_spam_is_blocked(self):
+        """Chegaradan oshgan izoh 429 qaytarishi kerak."""
+        with patch.object(CommentBurstThrottle, 'rate', '3/hour', create=True):
+            for i in range(3):
+                self.assertEqual(self._post_comment().status_code,
+                                 status.HTTP_201_CREATED, f'{i + 1}-izoh')
+
+            r = self._post_comment()
+
+        self.assertEqual(r.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertEqual(Comment.objects.filter(name='Spam').count(), 3)
+
+    def test_reading_comments_is_not_throttled(self):
+        """Yozish chegarasi o'qishga ta'sir qilmasligi kerak."""
+        with patch.object(CommentBurstThrottle, 'rate', '1/hour', create=True):
+            self._post_comment()  # chegarani tugatamiz
+            self.assertEqual(self._post_comment().status_code,
+                             status.HTTP_429_TOO_MANY_REQUESTS)
+
+            for _ in range(5):
+                self.assertEqual(self.client.get('/api/comments/').status_code,
+                                 status.HTTP_200_OK)
+
+    def test_login_bruteforce_is_blocked(self):
+        """Parol tanlashga urinish chegaralanadi."""
+        with patch.object(LoginRateThrottle, 'rate', '2/min', create=True):
+            for _ in range(2):
+                self.client.post('/api/auth/token/', {
+                    'username': 'tester', 'password': 'wrong',
+                }, format='json')
+
+            r = self.client.post('/api/auth/token/', {
+                'username': 'tester', 'password': 'wrong',
+            }, format='json')
+
+        self.assertEqual(r.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
+    def test_normal_usage_is_not_throttled(self):
+        """Oddiy foydalanuvchi chegaraga urilmasligi kerak."""
+        self.assertEqual(self._post_comment().status_code,
+                         status.HTTP_201_CREATED)
+        r = self.client.post('/api/auth/token/', {
+            'username': 'tester', 'password': 'parol12345',
+        }, format='json')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
