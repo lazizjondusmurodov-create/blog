@@ -1,0 +1,23 @@
+{# Qidiruv va kategoriyalar — ro'yxat sahifalarida takrorlanadi #}
+<div class="sidebar-box search-form-wrap mb-4">
+  <form action="{% url 'search' %}" class="sidebar-search-form" method="get">
+    <span class="bi-search"></span>
+    <input type="text" class="form-control" name="s" value="{{ query|default:'' }}"
+           placeholder="Kalit so'zni yozing...">
+  </form>
+</div>
+
+<div class="sidebar-box">
+  <h3 class="heading">Kategoriyalar</h3>
+  <ul class="categories list-unstyled mb-0">
+    {% for category in categories %}
+    <li>
+      <a href="{% url 'category_detail' category.pk %}">
+        {{ category.title }} <span>{{ category.blogs_count }}</span>
+      </a>
+    </li>
+    {% empty %}
+    <li><a href="#">Kategoriya yo'q</a></li>
+    {% endfor %}
+  </ul>
+</div>

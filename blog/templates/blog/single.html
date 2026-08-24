@@ -1,326 +1,171 @@
-{% load static %}
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="author" content="Untree.co">
-  <link rel="shortcut icon" href="{% static 'blog/favicon.png' %}">
+{% extends 'blog/base.html' %}
 
-  <meta name="description" content="" />
-  <meta name="keywords" content="bootstrap, bootstrap5" />
+{% block title %}{{ blog.title }} — Blogy{% endblock %}
+{% block meta_description %}{{ blog.short_description }}{% endblock %}
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-
-
-  <link rel="stylesheet" href="{% static 'blog/fonts/icomoon/style.css' %}">
-  <link rel="stylesheet" href="{% static 'blog/fonts/flaticon/font/flaticon.css' %}">
-
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
-
-  <link rel="stylesheet" href="{% static 'blog/css/tiny-slider.css' %}">
-  <link rel="stylesheet" href="{% static 'blog/css/aos.css' %}">
-  <link rel="stylesheet" href="{% static 'blog/css/glightbox.min.css' %}">
-  <link rel="stylesheet" href="{% static 'blog/css/style.css' %}">
-
-  <link rel="stylesheet" href="{% static 'blog/css/flatpickr.min.css' %}">
-
-
-  <title>{{ blog.title }} &mdash; Blogy</title>
-</head>
-<body>
-
-  <div class="site-mobile-menu site-navbar-target">
-    <div class="site-mobile-menu-header">
-      <div class="site-mobile-menu-close">
-        <span class="icofont-close js-menu-toggle"></span>
-      </div>
-    </div>
-    <div class="site-mobile-menu-body"></div>
-  </div>
-
-  <nav class="site-nav">
-    <div class="container">
-      <div class="menu-bg-wrap">
-        <div class="site-navigation">
-          <div class="row g-0 align-items-center">
-            <div class="col-2">
-              <a href="{% url 'blog_list' %}" class="logo m-0 float-start">Blogy<span class="text-primary">.</span></a>
-            </div>
-            <div class="col-8 text-center">
-              <form action="{% url 'search' %}" class="search-form d-inline-block d-lg-none" method="get">
-                <input type="text" name="s" class="form-control" placeholder="Search...">
-                <span class="bi-search"></span>
-              </form>
-
-              <ul class="js-clone-nav d-none d-lg-inline-block text-start site-menu mx-auto">
-                <li><a href="{% url 'blog_list' %}">Blogs</a></li>
-                <li><a href="{% url 'contact' %}">Contact</a></li>
-              </ul>
-            </div>
-            <div class="col-2 text-end">
-              <a href="#" class="burger ms-auto float-end site-menu-toggle js-menu-toggle d-inline-block d-lg-none light">
-                <span></span>
-              </a>
-              <form action="{% url 'search' %}" class="search-form d-none d-lg-inline-block" method="get">
-                <input type="text" name="s" class="form-control" placeholder="Search...">
-                <span class="bi-search"></span>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </nav>
-
-  <div class="site-cover site-cover-sm same-height overlay single-page" style="background-image: url('{% if blog.images.first %}{{ blog.images.first.image.url }}{% endif %}');">
-    <div class="container">
-      <div class="row same-height justify-content-center">
-        <div class="col-md-6">
-          <div class="post-entry text-center">
-            <h1 class="mb-4">{{ blog.title }}</h1>
-            <div class="post-meta align-items-center text-center">
-              <span class="d-inline-block mt-1">By {{ blog.author.name }}</span>
-              <span>&nbsp;-&nbsp; {{ blog.created_at|date:"F d, Y" }}</span>
-            </div>
+{% block hero %}
+<div class="site-cover site-cover-sm same-height overlay single-page"
+     style="background-image: url('{% with img=blog.images.all|first %}{% if img %}{{ img.image.url }}{% endif %}{% endwith %}');">
+  <div class="container">
+    <div class="row same-height justify-content-center">
+      <div class="col-md-8">
+        <div class="post-entry text-center">
+          <span class="badge-category mb-3 d-inline-block">{{ blog.category.title }}</span>
+          <h1 class="mb-4">{{ blog.title }}</h1>
+          <div class="post-meta align-items-center text-center">
+            <span class="d-inline-block mt-1">{{ blog.author.name }}</span>
+            <span>&nbsp;&bullet;&nbsp; {{ blog.created_at|date:"d M, Y" }}</span>
           </div>
         </div>
       </div>
     </div>
   </div>
+</div>
+{% endblock %}
 
-  <section class="section">
-    <div class="container">
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="row blog-entries element-animate">
 
-      <div class="row blog-entries element-animate">
+      <div class="col-md-12 col-lg-8 main-content">
 
-        <div class="col-md-12 col-lg-8 main-content">
+        <div class="post-content-body">
+          {{ blog.long_description|linebreaks }}
+        </div>
 
-          <div class="post-content-body">
-            {{ blog.long_description|linebreaks }}
-          </div>
+        <div class="pt-4">
+          <span class="text-muted small me-2">Kategoriya:</span>
+          <a href="{% url 'category_detail' blog.category.pk %}" class="badge-category">
+            {{ blog.category.title }}
+          </a>
+        </div>
 
-          <div class="pt-5">
-            <p>Categories: <a href="{% url 'category_detail' blog.category.pk %}">{{ blog.category.title }}</a></p>
-          </div>
+        <div class="pt-5 comment-wrap">
+          <h3 class="mb-4 heading">
+            {{ comments_count }} ta izoh
+          </h3>
 
-          <div class="pt-5 comment-wrap">
-            <h3 class="mb-5 heading">{{ comments_count }} Comments</h3>
-            <ul class="comment-list">
-              {% for comment in comments %}
-              <li class="comment">
-                <div class="comment-body">
-                  <h3>{{ comment.name }}</h3>
-                  <div class="meta">{{ comment.created_at|date:"F d, Y \a\t P" }}</div>
-                  <p>{{ comment.text|linebreaks }}</p>
-                </div>
-              </li>
-              {% empty %}
-              <p>Bu blog uchun hali izoh yo'q.</p>
+          <ul class="comment-list list-unstyled">
+            {% for comment in comments %}
+            <li class="comment">
+              <div class="comment-body">
+                <h3>{{ comment.name }}</h3>
+                <div class="meta">{{ comment.created_at|date:"d M, Y, H:i" }}</div>
+                {{ comment.text|linebreaks }}
+              </div>
+            </li>
+            {% empty %}
+            <li class="empty-state">
+              <span class="icon bi-chat-square-text"></span>
+              <h3>Hali izoh yo'q</h3>
+              <p>Birinchi bo'lib fikringizni qoldiring.</p>
+            </li>
+            {% endfor %}
+          </ul>
+
+          <div class="comment-form-wrap pt-5">
+            <h3 class="mb-4">Izoh qoldirish</h3>
+
+            {% if messages %}
+              {% for message in messages %}
+              <div class="alert alert-{{ message.tags }}">{{ message }}</div>
               {% endfor %}
-            </ul>
-            <!-- END comment-list -->
+            {% endif %}
 
-            <div class="comment-form-wrap pt-5">
-              <h3 class="mb-5">Leave a comment</h3>
-              {% if messages %}
-                {% for message in messages %}
-                  <div class="alert alert-{{ message.tags }}">
-                    {{ message }}
-                  </div>
-                {% endfor %}
-              {% endif %}
-              <form method="post" class="p-5 bg-light">
-                {% csrf_token %}
-                <div class="form-group">
-                  <label for="name">Name *</label>
-                  <input type="text" class="form-control" id="name" name="name" required>
-                </div>
-                <div class="form-group">
-                  <label for="email">Email *</label>
-                  <input type="email" class="form-control" id="email" name="email" required>
-                </div>
-                <div class="form-group">
-                  <label for="message">Message</label>
-                  <textarea name="text" id="message" cols="30" rows="10" class="form-control" required></textarea>
-                </div>
-                <div class="form-group">
-                  <input type="submit" value="Post Comment" class="btn btn-primary">
-                </div>
-              </form>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- END main-content -->
-
-        <div class="col-md-12 col-lg-4 sidebar">
-          <div class="sidebar-box search-form-wrap">
-            <form action="{% url 'search' %}" class="sidebar-search-form" method="get">
-              <span class="bi-search"></span>
-              <input type="text" class="form-control" id="s" name="s" placeholder="Type a keyword and hit enter">
+            <form method="post" class="p-4 p-md-5 bg-light">
+              {% csrf_token %}
+              <div class="form-group">
+                <label for="name">Ism <span class="text-primary">*</span></label>
+                <input type="text" class="form-control" id="name" name="name" required>
+              </div>
+              <div class="form-group">
+                <label for="email">Email <span class="text-primary">*</span></label>
+                <input type="email" class="form-control" id="email" name="email" required>
+              </div>
+              <div class="form-group">
+                <label for="message">Xabar <span class="text-primary">*</span></label>
+                <textarea name="text" id="message" cols="30" rows="7" class="form-control" required></textarea>
+              </div>
+              <div class="form-group mb-0">
+                <input type="submit" value="Izohni yuborish" class="btn btn-primary">
+              </div>
             </form>
           </div>
-          <!-- END sidebar-box -->
-          <div class="sidebar-box">
-            <div class="bio text-center">
-              {% if blog.author.image %}
-              <img src="{{ blog.author.image.url }}" alt="Image Placeholder" class="img-fluid mb-3 rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+        </div>
+
+      </div>
+
+      <div class="col-md-12 col-lg-4 sidebar">
+        <div class="sidebar-box search-form-wrap">
+          <form action="{% url 'search' %}" class="sidebar-search-form" method="get">
+            <span class="bi-search"></span>
+            <input type="text" class="form-control" name="s" placeholder="Kalit so'zni yozing...">
+          </form>
+        </div>
+
+        <div class="sidebar-box">
+          <div class="bio text-center">
+            {% if blog.author.image %}
+            <img src="{{ blog.author.image.url }}" alt="{{ blog.author.name }}"
+                 class="img-fluid mb-3 rounded-circle"
+                 style="width: 120px; height: 120px; object-fit: cover;">
+            {% endif %}
+            <div class="bio-body">
+              <h2>{{ blog.author.name }}</h2>
+              {% if blog.author.bio %}
+              <p class="mb-0">{{ blog.author.bio }}</p>
               {% endif %}
-              <div class="bio-body">
-                <h2>{{ blog.author.name }}</h2>
-                {% if blog.author.bio %}
-                <p class="mb-4">{{ blog.author.bio }}</p>
-                {% endif %}
-              </div>
             </div>
           </div>
-          <!-- END sidebar-box -->
-          <div class="sidebar-box">
-            <h3 class="heading">Categories</h3>
-            <ul class="categories">
-              {% for category in categories %}
-              <li><a href="{% url 'category_detail' category.pk %}">{{ category.title }} <span>({{ category.blogs.count }})</span></a></li>
-              {% endfor %}
-            </ul>
-          </div>
-          <!-- END sidebar-box -->
         </div>
-        <!-- END sidebar -->
 
-      </div>
-    </div>
-  </section>
-
-  {% if related_blogs %}
-  <!-- Start posts-entry -->
-  <section class="section posts-entry posts-entry-sm bg-light">
-    <div class="container">
-      <div class="row mb-4">
-        <div class="col-12 text-uppercase text-black">More Blog Posts</div>
-      </div>
-      <div class="row">
-        {% for related_blog in related_blogs %}
-        <div class="col-md-6 col-lg-3">
-          <div class="blog-entry">
-            <a href="{% url 'blog_detail' related_blog.pk %}" class="img-link">
-              {% if related_blog.images.first %}
-              <img src="{{ related_blog.images.first.image.url }}" alt="Image" class="img-fluid">
-              {% endif %}
-            </a>
-            <span class="date">{{ related_blog.created_at|date:"M. d, Y" }}</span>
-            <h2><a href="{% url 'blog_detail' related_blog.pk %}">{{ related_blog.title }}</a></h2>
-            <p>{{ related_blog.short_description }}</p>
-            <p><a href="{% url 'blog_detail' related_blog.pk %}" class="read-more">Continue Reading</a></p>
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
-  {% endif %}
-  <!-- End posts-entry -->
-
-  <footer class="site-footer">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-4">
-          <div class="widget">
-            <h3 class="mb-4">About</h3>
-            <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.</p>
-          </div> <!-- /.widget -->
-          <div class="widget">
-            <h3>Social</h3>
-            <ul class="list-unstyled social">
-              <li><a href="#"><span class="icon-instagram"></span></a></li>
-              <li><a href="#"><span class="icon-twitter"></span></a></li>
-              <li><a href="#"><span class="icon-facebook"></span></a></li>
-              <li><a href="#"><span class="icon-linkedin"></span></a></li>
-              <li><a href="#"><span class="icon-pinterest"></span></a></li>
-              <li><a href="#"><span class="icon-dribbble"></span></a></li>
-            </ul>
-          </div> <!-- /.widget -->
-        </div> <!-- /.col-lg-4 -->
-        <div class="col-lg-4 ps-lg-5">
-          <div class="widget">
-            <h3 class="mb-4">Company</h3>
-            <ul class="list-unstyled float-start links">
-              <li><a href="#">About us</a></li>
-              <li><a href="#">Services</a></li>
-              <li><a href="#">Vision</a></li>
-              <li><a href="#">Mission</a></li>
-              <li><a href="#">Terms</a></li>
-              <li><a href="#">Privacy</a></li>
-            </ul>
-            <ul class="list-unstyled float-start links">
-              <li><a href="#">Partners</a></li>
-              <li><a href="#">Business</a></li>
-              <li><a href="#">Careers</a></li>
-              <li><a href="{% url 'blog_list' %}">Blog</a></li>
-              <li><a href="#">FAQ</a></li>
-              <li><a href="#">Creative</a></li>
-            </ul>
-          </div> <!-- /.widget -->
-        </div> <!-- /.col-lg-4 -->
-        <div class="col-lg-4">
-          <div class="widget">
-            <h3 class="mb-4">Recent Post Entry</h3>
-            <div class="post-entry-footer">
-              <ul>
-                {% for recent_blog in categories.first.blogs.all|slice:":3" %}
-                <li>
-                  <a href="{% url 'blog_detail' recent_blog.pk %}">
-                    {% if recent_blog.images.first %}
-                    <img src="{{ recent_blog.images.first.image.url }}" alt="Image placeholder" class="me-4 rounded">
-                    {% endif %}
-                    <div class="text">
-                      <h4>{{ recent_blog.title }}</h4>
-                      <div class="post-meta">
-                        <span class="mr-2">{{ recent_blog.created_at|date:"F d, Y" }}</span>
-                      </div>
-                    </div>
-                  </a>
-                </li>
-                {% endfor %}
-              </ul>
-            </div>
-
-          </div> <!-- /.widget -->
-        </div> <!-- /.col-lg-4 -->
-      </div> <!-- /.row -->
-
-      <div class="row mt-5">
-        <div class="col-12 text-center">
-          <p>Copyright &copy;<script>document.write(new Date().getFullYear());</script>. All Rights Reserved. &mdash; Designed with love by <a href="https://untree.co">Untree.co</a>  Distributed by <a href="https://themewagon.com">ThemeWagon</a></p>
+        <div class="sidebar-box">
+          <h3 class="heading">Kategoriyalar</h3>
+          <ul class="categories list-unstyled mb-0">
+            {% for category in categories %}
+            <li>
+              <a href="{% url 'category_detail' category.pk %}">
+                {{ category.title }} <span>{{ category.blogs_count }}</span>
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
         </div>
       </div>
-    </div> <!-- /.container -->
-  </footer> <!-- /.site-footer -->
 
-  <!-- Preloader -->
-  <div id="overlayer"></div>
-  <div class="loader">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
     </div>
   </div>
+</section>
 
-
-  <script src="{% static 'blog/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'blog/js/tiny-slider.js' %}"></script>
-
-  <script src="{% static 'blog/js/flatpickr.min.js' %}"></script>
-
-
-  <script src="{% static 'blog/js/aos.js' %}"></script>
-  <script src="{% static 'blog/js/glightbox.min.js' %}"></script>
-  <script src="{% static 'blog/js/navbar.js' %}"></script>
-  <script src="{% static 'blog/js/counter.js' %}"></script>
-  <script src="{% static 'blog/js/custom.js' %}"></script>
-
-
-</body>
-</html>
+{% if related_blogs %}
+<section class="section posts-entry posts-entry-sm bg-light">
+  <div class="container">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="section-title">O'xshash maqolalar</div>
+      </div>
+    </div>
+    <div class="row">
+      {% for related_blog in related_blogs %}
+      <div class="col-md-6 col-lg-4">
+        <div class="blog-entry" data-aos="fade-up">
+          <a href="{% url 'blog_detail' related_blog.pk %}" class="img-link">
+            {% with img=related_blog.images.all|first %}{% if img %}
+            <img src="{{ img.image.url }}" alt="{{ related_blog.title }}" class="img-fluid">
+            {% endif %}{% endwith %}
+          </a>
+          <span class="date">{{ related_blog.created_at|date:"d M, Y" }}</span>
+          <h2><a href="{% url 'blog_detail' related_blog.pk %}">{{ related_blog.title }}</a></h2>
+          <p>{{ related_blog.short_description|truncatewords:14 }}</p>
+          <p class="mb-0">
+            <a href="{% url 'blog_detail' related_blog.pk %}" class="read-more">O'qishni davom ettirish</a>
+          </p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,14 +1,29 @@
-from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
+from django.db.models import Count, Q
+from django.shortcuts import get_object_or_404, redirect, render
+
 from .models import Blog, Category, Comment
 
 
+def _categories():
+    """Sidebar uchun kategoriyalar — blogs_count annotate qilingan.
+
+    Annotate bo'lmasa shablondagi har bir sanoq alohida so'rov yuboradi (N+1).
+    """
+    return Category.objects.annotate(blogs_count=Count('blogs'))
+
+
 def blog_list(request):
-    blogs = Blog.objects.select_related('author', 'category').all()
-    categories = Category.objects.all()
+    blogs = (
+        Blog.objects
+        .select_related('author', 'category')
+        .prefetch_related('images')
+        .order_by('-created_at')
+    )
     return render(request, 'blog/blog.html', {
         'blogs': blogs,
-        'categories': categories,
+        'categories': _categories(),
+        'nav_active': 'blog',
     })
 
 
@@ -17,8 +32,6 @@ def blog_detail(request, pk):
         Blog.objects.select_related('author', 'category'),
         pk=pk
     )
-    comments = blog.comments.all().order_by('-created_at')
-    categories = Category.objects.all()
 
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -32,47 +45,69 @@ def blog_detail(request, pk):
         else:
             messages.error(request, "Barcha maydonlarni to'ldiring!")
 
-    related_blogs = Blog.objects.filter(
-        category=blog.category
-    ).exclude(pk=blog.pk)[:3]
+    comments = blog.comments.all().order_by('-created_at')
+    related_blogs = (
+        Blog.objects
+        .select_related('category')
+        .prefetch_related('images')
+        .filter(category=blog.category)
+        .exclude(pk=blog.pk)[:3]
+    )
 
     return render(request, 'blog/single.html', {
         'blog': blog,
         'comments': comments,
         'comments_count': comments.count(),
         'related_blogs': related_blogs,
-        'categories': categories,
+        'categories': _categories(),
+        'nav_active': 'blog',
     })
 
 
 def category_detail(request, pk):
     category = get_object_or_404(Category, pk=pk)
-    blogs = category.blogs.all()
-    categories = Category.objects.all()
+    blogs = (
+        category.blogs
+        .select_related('author', 'category')
+        .prefetch_related('images')
+        .order_by('-created_at')
+    )
     return render(request, 'blog/category.html', {
         'category': category,
         'blogs': blogs,
-        'categories': categories,
+        'categories': _categories(),
+        'nav_active': 'blog',
     })
 
 
 def search(request):
-    query = request.GET.get('s', '')
-    blogs = Blog.objects.filter(
-        title__icontains=query
-    ) | Blog.objects.filter(
-        short_description__icontains=query
-    ) | Blog.objects.filter(
-        long_description__icontains=query
-    )
-    blogs = blogs.select_related('author', 'category').distinct()
-    categories = Category.objects.all()
+    query = request.GET.get('s', '').strip()
+
+    blogs = Blog.objects.none()
+    if query:
+        blogs = (
+            Blog.objects
+            .select_related('author', 'category')
+            .prefetch_related('images')
+            .filter(
+                Q(title__icontains=query)
+                | Q(short_description__icontains=query)
+                | Q(long_description__icontains=query)
+            )
+            .distinct()
+            .order_by('-created_at')
+        )
+
     return render(request, 'blog/search-result.html', {
         'blogs': blogs,
-        'categories': categories,
+        'categories': _categories(),
         'query': query,
+        'nav_active': 'blog',
     })
 
 
 def contact(request):
-    return render(request, 'blog/contact.html')
+    return render(request, 'blog/contact.html', {
+        'categories': _categories(),
+        'nav_active': 'contact',
+    })
