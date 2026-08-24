@@ -10,22 +10,53 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+import dj_database_url
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# .env fayli bo'lsa o'qiymiz (ishlab chiqishda qulay, serverda esa odatda
+# muhit o'zgaruvchilari to'g'ridan-to'g'ri beriladi).
+load_dotenv(BASE_DIR / '.env')
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-7=$e#ae^-$=ro)14ge0u09aj0=jfr=v2gv99(nw1e8es2s#f7^'
+def env_bool(name, default=False):
+    """Muhit o'zgaruvchisini mantiqiy qiymatga o'giradi."""
+    return os.getenv(name, str(default)).strip().lower() in ('1', 'true', 'yes', 'on')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = []
+def env_list(name, default=''):
+    """Vergul bilan ajratilgan ro'yxatni o'qiydi."""
+    return [item.strip() for item in os.getenv(name, default).split(',') if item.strip()]
+
+
+# DEBUG standart bo'yicha o'chiq — serverda tasodifan yoqilib qolmasligi
+# uchun. Ishlab chiqishda .env faylida DEBUG=True qilinadi.
+DEBUG = env_bool('DEBUG', False)
+
+# SECRET_KEY muhit o'zgaruvchisidan olinadi. DEBUG rejimida qiymat
+# berilmagan bo'lsa vaqtinchalik kalit ishlatiladi; productionda esa
+# yo'qligi darrov xato beradi — jimgina zaif kalit bilan ishlamasin.
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-faqat-ishlab-chiqish-uchun-kalit'
+    else:
+        raise RuntimeError(
+            'SECRET_KEY muhit o\'zgaruvchisi berilmagan. '
+            'Yangi kalit yaratish: python manage.py shell -c '
+            '"from django.core.management.utils import get_random_secret_key; '
+            'print(get_random_secret_key())"'
+        )
+
+ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', 'localhost,127.0.0.1' if DEBUG else '')
+
+# Formalar HTTPS orqali yuborilganda kerak (Django 4+ talabi).
+CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS')
 
 
 # Application definition
@@ -74,6 +105,8 @@ REST_FRAMEWORK = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Statik fayllarni Django o'zi tarqatadi — alohida nginx sozlash shart emas
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -106,11 +139,16 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# DATABASE_URL berilgan bo'lsa o'sha ishlatiladi (masalan PostgreSQL:
+# postgres://user:parol@host:5432/dbname), aks holda SQLite.
+# .env da "DATABASE_URL=" bo'sh qoldirilishi mumkin — shuning uchun bo'sh
+# satrni ham berilmagan deb hisoblaymiz.
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.parse(
+        os.getenv('DATABASE_URL') or f'sqlite:///{BASE_DIR / "db.sqlite3"}',
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 
@@ -149,12 +187,96 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+# collectstatic shu papkaga yig'adi — serverda whitenoise shu yerdan tarqatadi
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Media files
+# Manifest storage collectstatic yugurtirilishini talab qiladi, shuning uchun
+# faqat productionda. Ishlab chiqishda va testlarda oddiy storage ishlatiladi.
+_static_backend = (
+    'django.contrib.staticfiles.storage.StaticFilesStorage'
+    if DEBUG else
+    # Fayl nomiga hash qo'shadi va siqadi — brauzer keshi to'g'ri ishlaydi
+    'whitenoise.storage.CompressedManifestStaticFilesStorage'
+)
+
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': _static_backend,
+    },
+}
+
+# Media files (foydalanuvchi yuklagan rasmlar)
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Productionda media fayllarni whitenoise tarqatadi (config/urls.py ga qarang).
+#
+# Diqqat: ko'p hosting'larda disk vaqtinchalik — qayta joylashda yuklangan
+# rasmlar yo'qoladi. Jiddiy loyihada S3 kabi tashqi saqlash yoki doimiy disk
+# (Render Disk, Railway Volume) kerak bo'ladi.
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Xavfsizlik
+# https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+#
+# Quyidagilar faqat productionda (DEBUG=False) yoqiladi — ishlab chiqishda
+# HTTPS bo'lmagani uchun SSL talab qilish saytni ochib bo'lmaydigan qiladi.
+
+if not DEBUG:
+    # HTTPS ga yo'naltirish. Reverse-proxy (nginx, Render, Railway) o'zi
+    # yo'naltirsa, .env da SECURE_SSL_REDIRECT=False qilish mumkin.
+    SECURE_SSL_REDIRECT = env_bool('SECURE_SSL_REDIRECT', True)
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+    # Cookie'lar faqat HTTPS orqali yuborilsin
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    # HSTS — brauzerga "bu saytga faqat HTTPS bilan kir" deydi.
+    # Diqqat: bir marta yoqilgach brauzer buni uzoq eslab qoladi.
+    # Shuning uchun boshida kichik qiymat (masalan 3600) bilan sinab ko'ring.
+    SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '3600'))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', False)
+    SECURE_HSTS_PRELOAD = env_bool('SECURE_HSTS_PRELOAD', False)
+
+    # Qo'shimcha himoya sarlavhalari
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SESSION_COOKIE_HTTPONLY = True
+
+    # Xatolarni konsolga yozamiz — server loglarida ko'rinadi
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'verbose': {
+                'format': '{levelname} {asctime} {name} {message}',
+                'style': '{',
+            },
+        },
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'formatter': 'verbose',
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': os.getenv('LOG_LEVEL', 'INFO'),
+        },
+        'loggers': {
+            'django.request': {
+                'handlers': ['console'],
+                'level': 'ERROR',
+                'propagate': False,
+            },
+        },
+    }

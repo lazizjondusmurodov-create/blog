@@ -3,3 +3,12 @@ Pillow>=10.0
 djangorestframework>=3.15
 django-filter>=24.0
 Markdown>=3.5
+
+# Serverga joylash uchun
+gunicorn>=21.0          # WSGI server (Linux)
+whitenoise>=6.6         # statik fayllarni Django o'zi tarqatadi
+python-dotenv>=1.0      # .env faylini o'qish
+dj-database-url>=2.1    # DATABASE_URL ni parse qilish
+
+# PostgreSQL ishlatsangiz quyidagini ham o'rnating:
+# psycopg[binary]>=3.1

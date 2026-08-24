@@ -12,8 +12,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="{% static 'blog/fonts/icomoon/style.css' %}">
-  <link rel="stylesheet" href="{% static 'blog/fonts/flaticon/font/flaticon.css' %}">
+  {# icomoon/flaticon shrift fayllari shablon bilan kelmagan —
+     ikonkalar uchun Bootstrap Icons ishlatiladi (quyida) #}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
 
   <link rel="stylesheet" href="{% static 'blog/css/tiny-slider.css' %}">
@@ -33,7 +33,7 @@
   <div class="site-mobile-menu site-navbar-target">
     <div class="site-mobile-menu-header">
       <div class="site-mobile-menu-close">
-        <span class="icofont-close js-menu-toggle"></span>
+        <i class="bi bi-x-lg js-menu-toggle"></i>
       </div>
     </div>
     <div class="site-mobile-menu-body"></div>
@@ -89,10 +89,10 @@
           <div class="widget">
             <h3>Ijtimoiy tarmoqlar</h3>
             <ul class="list-unstyled social">
-              <li><a href="#" aria-label="Instagram"><span class="icon-instagram"></span></a></li>
-              <li><a href="#" aria-label="Twitter"><span class="icon-twitter"></span></a></li>
-              <li><a href="#" aria-label="Facebook"><span class="icon-facebook"></span></a></li>
-              <li><a href="#" aria-label="LinkedIn"><span class="icon-linkedin"></span></a></li>
+              <li><a href="#" aria-label="Instagram"><i class="bi bi-instagram"></i></a></li>
+              <li><a href="#" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a></li>
+              <li><a href="#" aria-label="Facebook"><i class="bi bi-facebook"></i></a></li>
+              <li><a href="#" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a></li>
             </ul>
           </div>
         </div>

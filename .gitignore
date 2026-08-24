@@ -12,6 +12,11 @@ local_settings.py
 media/
 staticfiles/
 
+# Maxfiy sozlamalar — HECH QACHON commit qilinmasin
+.env
+.env.local
+.env.*.local
+
 # Virtual environment
 venv/
 env/
