@@ -571,6 +571,17 @@ a:focus-visible,
   font-weight: 600;
 }
 .contact-info p { font-size: .9rem; margin-bottom: 0; }
+/* Telefon/email havolalari matn kabi ko'rinsin, bosilganda ajralsin */
+.contact-info a {
+  color: var(--ink-muted);
+  border-bottom: 1px solid transparent;
+  transition: color .2s var(--ease), border-color .2s var(--ease);
+  word-break: break-word;
+}
+.contact-info a:hover {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
 
 /* 10. Moslashuvchanlik va harakatlar
    ========================================================================== */
