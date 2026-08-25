@@ -544,10 +544,8 @@ a:focus-visible,
 .search-result-wrap .heading .query { color: var(--brand); }
 
 /* Aloqa sahifasi ma'lumot bloklari */
-.contact-info .address,
-.contact-info .open-hours,
-.contact-info .email,
-.contact-info .phone {
+/* Har bir ma'lumot bloki — yangi blok qo'shilsa ham uslub qo'llanadi */
+.contact-info > div {
   background: var(--surface-alt);
   border: 1px solid var(--border);
   border-radius: var(--radius);
